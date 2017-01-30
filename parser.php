@@ -1,31 +1,17 @@
 <?php
-/*
- * Парсер Gedcom к курсовой работе "Интелектуальные системы"
- * Магистратура МАИ, 2016-1017, 1-ый семестр
- * rustd@yandex.ru
- * Дасаев Р.Р.
- *
- * Вызов из командной строки:
- * пример:
- * php parser.php -fprolog -groyal_family.ged -rfamily
- * парсить в result.pl:
- * parser.php -groyal_family.ged
- *
- *    -f - формат результата
- *    -fprolog    - пролог формат <file>.pl
- *    -fjson      - json формат   <file>.json
- *    -fxml       - xml формат    <file>.xml
- *
- *    -g      - gedcom файл для парсинга
- *    -r      - result файл, по-умолчанию result
- */
 
 use lib\Gedcom;
 
 $options = getopt('f::g:r::');
 
 spl_autoload_register(function ($class) {
-  include str_replace('\\', '/', $class) . '.php';
+  $classFile = str_replace('\\', '/', $class) . '.php';
+
+  if (!file_exists($classFile)) {
+    throw new Exception('no class file');
+  }
+
+  include $classFile;
 });
 
 if (!isset($options['g'])) {

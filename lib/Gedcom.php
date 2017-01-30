@@ -2,12 +2,16 @@
 
 namespace lib;
 
+use tag\aclasses\AObject;
+use tag\aclasses\AProperty;
+
 /**
  * Конвертер GEDCOM в json, prolog, xml форматы
  * Class Gedcom
  */
-class Gedcom extends GedcomTags
+class Gedcom
 {
+
   /**
    * Исходный файл GEDCOM
    * @var string
@@ -27,10 +31,16 @@ class Gedcom extends GedcomTags
   protected $_format = 'prolog';
 
   /**
-   * Узлы дерева
-   * @var null
+   * Кол-во строк в файле
+   * @var integer
    */
-  protected $_nodes = null;
+  protected $_length;
+
+  /**
+   * Номер текущей строки
+   * @var integer
+   */
+  protected $_strNum;
 
   /**
    * Gedcom constructor.
@@ -47,6 +57,8 @@ class Gedcom extends GedcomTags
   protected function init()
   {
     $this->_data = file($this->_file);
+    $this->_length = count($this->_data) - 1;
+    $this->_strNum = -1;
   }
 
   /**
@@ -57,6 +69,7 @@ class Gedcom extends GedcomTags
    */
   public function setFormat($format)
   {
+    // если не задан формат вывода, то ошибка
     if (false === key_exists($format, $this->_formats())) {
       throw new \Exception('Incorrect output format');
     }
@@ -64,7 +77,6 @@ class Gedcom extends GedcomTags
 
     return $this;
   }
-
 
   /**
    * Перечень возможных форматов
@@ -93,8 +105,7 @@ class Gedcom extends GedcomTags
   }
 
   /**
-   * Процесс парсинга
-   * @param null $node
+   * @param AObject|AProperty|null $node
    * @return $this
    */
   public function parse($node = null)
@@ -107,10 +118,12 @@ class Gedcom extends GedcomTags
     $matches = [];
 
     // парсим по строкам
-    while ($this->_data) {
+    while ($this->_strNum < $this->_length) {
+      // прибавляем номер строки
+      $this->_strNum++;
 
       // текущая строка
-      $string = trim(array_shift($this->_data));
+      $string = trim($this->_data[$this->_strNum]);
 
       // проверяем правила
       foreach ($this->tagPatterns() as $pattern) {
@@ -125,16 +138,20 @@ class Gedcom extends GedcomTags
 
         // текущий уровень
         $currentLevel = array_shift($matches);
-        if (isset($prevLevel) && $currentLevel < $prevLevel && !is_null($node)) {
-          array_unshift($this->_data, $string);
 
-          return $this;
+        // если нет сущности, для которой можно добавлять атрибуты, то просто пропускаем
+        if (is_null($node) && $currentLevel > 0) {
+          continue;
         }
 
-        // запомним текущий уровень
-        $prevLevel = $currentLevel;
+        // если текущий уровень стал менее или равен уровню текущей сущности, то текущая сущность отпарсилась
+        if ($node && $currentLevel <= $node->level) {
+          $this->_strNum--;
 
-        // второе совпадение может быть либо id сущности, либо атрибут сущности
+          return;
+        }
+
+        // второе совпадение может быть либо id сущности, либо атрибут сущности (тэг)
         $tag = trim(array_shift($matches));
         $value = null;
 
@@ -151,39 +168,45 @@ class Gedcom extends GedcomTags
         // приведем тэг к нижнему регистру
         $tag = strtolower($tag);
 
-        // метода для найденного тэга, которые попадают в парсинг (если описан метод в классе)
-        $tagMethod = $this->tagParseMethod($tag);
-        // если метода парсинга тега нет, то пропускаем
-        if (false === method_exists($this, $tagMethod)) {
-          continue;
-        }
-
         // если нашли Id, то это новая сущность (если нет значения то тоже сущность HEAD)
-        if (!is_null($id) || is_null($value)) {
-          $newNode = $this->{$tagMethod}($id);
-        }
-
-        if (isset($newNode)) {
-          // новая сущность, для него парсим вложенные элемента
+        $tagClass = $this->getTagClass($tag);
+        $newNode = $this->factory($tagClass, $id, $currentLevel);
+        // получили новый объект по тегу
+        if ($newNode) {
+          // теперь парсим данные для новой сущности тэга, пока не выйдем на его уровень
           $this->parse($newNode);
 
+          if ($newNode instanceof AObject) {
+            continue;
+          }
+          $value = $newNode;
+          unset($newNode);
+        }
+
+        // если не нашли атрибут для сущности или нет значения, то пропускаем
+        if (is_null($node) || !$value) {
           continue;
         }
 
-        // если нашли атрибут для сущности, то парсим его
-        if ($node && $value) {
-          // если в классе описано свойство, которое парсим, то запоминаем его
-          if (property_exists($node, $tag)) {
-            // проверяем значение является ссылкой на другую сущность или нет
-            $referenceId = $this->getId($value);
-            if ($referenceId) {
-              // если это сущность
-              $node->{$tag}[] = $this->getReferenceById($tag, $referenceId);
-            } else {
-              // просто значение
-              $node->{$tag} = trim($value);
-            }
-          }
+        // если в классе не описано свойство тэга, топропускаем
+        if (false === property_exists($node, $tag)) {
+          continue;
+        }
+
+        // если значение стало сущностью, запоминаем в свойстве объекта и дальнейшее пропускаем
+        if (is_object($value)) {
+          $node->{$tag} = $value;
+          continue;
+        }
+
+        // если свойство - это ссылка на другой объект, то присваиваем свойству объект по его Id
+        $referenceId = $this->getId($value);
+        if ($referenceId) {
+          // если это сущность
+          $this->setReferenceById($node, $tag, $referenceId, $currentLevel);
+        } else {
+          // иначе просто строковое значение
+          $node->{$tag} = trim($value);
         }
       }
     }
@@ -192,18 +215,31 @@ class Gedcom extends GedcomTags
   }
 
   /**
-   * Имя метода
-   * @param $tag
-   * @return string
+   * Проверка на возможность автозагрузки класса для тега
+   * @param string  $className
+   * @param integer $id
+   * @param integer $level
+   * @return AObject|AProperty|null
    */
-  protected function tagParseMethod($tag)
+  protected function factory($className, $id, $level)
   {
-    return strtolower($tag) . 'Parse';
+    try {
+      class_exists($className, true);
+
+      return $id ? $className::getObject($id, $level) : $className::getObject($level);
+    } catch (\Exception $e) {
+      return null;
+    }
+  }
+
+  protected function getTagClass($tag)
+  {
+    return 'tag\\' . ucfirst($tag);
   }
 
   /**
    * Попытка получить Id из тэга
-   * @param $tag
+   * @param string $tag
    * @return int|null
    */
   protected function getId($tag)
@@ -217,39 +253,14 @@ class Gedcom extends GedcomTags
   }
 
   /**
-   * @param $id
-   * @return Person
-   */
-  protected function indiParse($id)
-  {
-    if (!isset($this->_nodes['indi'][$id])) {
-      $this->_nodes['indi'][$id] = new Person();
-    }
-
-    return $this->_nodes['indi'][$id];
-  }
-
-  /**
-   * @param $id
-   * @return Family
-   */
-  protected function famParse($id)
-  {
-    if (!isset($this->_nodes['fam'][$id])) {
-      $this->_nodes['fam'][$id] = new Family();
-    }
-
-    return $this->_nodes['fam'][$id];
-  }
-
-  /**
    * Паттерны тэгов
    * @return array
    */
   protected function tagPatterns()
   {
     return [
-        '/([0-9])+\s+(@[A-Z][0-9]+@|[A-Z]+)\s*(.*)?/',
+        '/([0-9])+\s+(@[A-Z][0-9]+@)\s*([A-Z]+)?/', // паттерн поиска тега вида: "0 @S5@ SOUR"  0 - уровень 5 - ид, SOUR - тэг
+        '/([0-9])+\s+([A-Z]+)\s*(.*)?/',            // паттерн поиска аттрибутов для основого тэга например, "2 PAGE Volume 8, page 63" 2 - уровень, PAGE - имя атрибута, Volume 8 - значение атрибута
     ];
   }
 
@@ -269,11 +280,12 @@ class Gedcom extends GedcomTags
 
     if (class_exists($class) && method_exists($class, 'save')) {
       $class = new $class;
-      $class->save($this->_nodes, $fileTo);
+      $class->save($fileTo);
     }
   }
 
   /**
+   * Расширение файла по его формату
    * @return string
    */
   protected function _fileType()
@@ -285,28 +297,40 @@ class Gedcom extends GedcomTags
 
   /**
    * Поиск сущности по id
-   * @param $tag
-   * @param $id
-   * @return null
+   * @param AObject|AProperty $node
+   * @param string            $tag
+   * @param integer           $id
+   * @param integer           $level
+   * @return mixed
    */
-  protected function getReferenceById($tag, $id)
+  protected function setReferenceById($node, $tag, $id = null, $level = 0)
   {
-    $referenceRules = GedcomTags::referenceRules();
-
-    $tag = isset($referenceRules[$tag]) ? $referenceRules[$tag] : $tag;
-    if (!isset($this->_nodes[$tag][$id])) {
-      $tagMethod = $this->tagParseMethod($tag);
-      if (method_exists($this, $tagMethod)) {
-        $this->_nodes[$tag][$id] = $this->{$tagMethod}($id);
-      }
+    if (true === is_null($node)) {
+      return;
     }
 
-    if (isset($this->_nodes[$tag][$id])) {
-      return $this->_nodes[$tag][$id];
+    if (false === property_exists($node, $tag)) {
+      return;
     }
 
-    return $id;
+    $value = $id;
+    $isCollection = false;
+    $referenceRules = $node->referenceRules();
+
+    if (isset($referenceRules[$tag])) {
+
+      $referenceTag = $referenceRules[$tag];
+      $isCollection = is_array($node->{$tag});
+      /** @var AObject $tagClass */
+      $tagClass = $this->getTagClass($referenceTag);
+      $value = $this->factory($tagClass, $id, $level);
+    }
+
+    if ($isCollection) {
+      array_push($node->{$tag}, $value);
+    } else {
+      $node->{$tag} = $value;
+    }
   }
-
 
 }

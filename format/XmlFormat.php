@@ -2,10 +2,22 @@
 
 namespace format;
 
-class XmlFormat implements IFormat
+use format\aclasses\AFormat;
+
+/**
+ * Сохранение в формате XML
+ * Class XmlFormat
+ * @package format
+ */
+class XmlFormat extends AFormat
 {
-  public function save($data, $file)
+
+  /**
+   * @inheritdoc
+   */
+  public function save($file)
   {
     // TODO: Implement save() method
   }
+  
 }

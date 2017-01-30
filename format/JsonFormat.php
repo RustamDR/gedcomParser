@@ -2,12 +2,22 @@
 
 namespace format;
 
-class JsonFormat implements IFormat
+use format\aclasses\AFormat;
+
+/**
+ * Сохранение в формате JSON
+ * Class JsonFormat
+ * @package format
+ */
+class JsonFormat extends AFormat
 {
 
-  public function save($data, $file)
+  /**
+   * @inheritdoc
+   */
+  public function save($file)
   {
-    file_put_contents($file, json_encode($data));
+    file_put_contents($file, json_encode(['indi' => $this->_indies, 'fam' => $this->_fams]));
   }
 
 }
