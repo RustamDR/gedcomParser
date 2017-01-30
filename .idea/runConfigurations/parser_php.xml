@@ -1,5 +1,0 @@
-<component name="ProjectRunConfigurationManager">
-  <configuration default="false" name="parser.php" type="PhpLocalRunConfigurationType" factoryName="PHP Console" path="$PROJECT_DIR$/parser.php" scriptParameters="-fprolog -gengland.ged">
-    <method />
-  </configuration>
-</component>
