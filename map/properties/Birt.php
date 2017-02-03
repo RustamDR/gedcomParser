@@ -35,7 +35,7 @@ class Birt extends AProperty
   public function referenceRules()
   {
     return [
-      'sour' => 'sour',
+        'sour' => 'sour',
     ];
   }
 

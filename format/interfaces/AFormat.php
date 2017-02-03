@@ -1,6 +1,7 @@
 <?php
 
 namespace format\interfaces;
+
 use map\objects\Fam;
 use map\objects\Indi;
 
@@ -31,5 +32,5 @@ abstract class AFormat implements IFormat
     $this->_indies = Indi::$initializedObjects;
     $this->_fams = Fam::$initializedObjects;
   }
-  
+
 }

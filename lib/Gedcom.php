@@ -106,7 +106,7 @@ class Gedcom
 
   /**
    * @param AObject|AProperty|null $node
-   * @param integer $previosLevel
+   * @param integer                $previosLevel
    * @return $this
    */
   public function parse($node = null, $previosLevel = 0)
@@ -170,7 +170,6 @@ class Gedcom
         $tag = strtolower($tag);
 
         // если нашли Id, то это новая сущность
-        // TODO если встретили и свойство и объект то создаем объект и присваиваем его свойству как то так ....
         $newNode = $this->factory($tag, $id, $currentLevel);
         // получили новый объект по тегу
         if ($newNode) {

@@ -8,7 +8,7 @@ namespace format\interfaces;
  */
 interface IFormat
 {
-  
+
   /**
    * Сохранение в файл
    * @param $file

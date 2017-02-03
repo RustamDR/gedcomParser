@@ -9,7 +9,7 @@ namespace map\interfaces;
  */
 abstract class AProperty extends ALevel
 {
-  
+
   /**
    * Фабричный метод создания сущности свойства
    * @param integer $level
