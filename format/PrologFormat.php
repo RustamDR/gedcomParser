@@ -2,7 +2,7 @@
 
 namespace format;
 
-use format\aclasses\AFormat;
+use format\interfaces\AFormat;
 
 /**
  * Сохранение в формат Prolog

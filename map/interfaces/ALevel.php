@@ -1,11 +1,11 @@
 <?php
 
-namespace tag\aclasses;
+namespace map\interfaces;
 
 /**
  * Общий класс характеризующий все теги
  * Class ALevel
- * @package tag\aclasses
+ * @package map\interfaces
  */
 abstract class ALevel
 {

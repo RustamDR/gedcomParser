@@ -1,11 +1,11 @@
 <?php
 
-namespace tag\aclasses;
+namespace map\interfaces;
 
 /**
  * Абстрактный мультитон для объектов тегов (каждый класс объектов тега хранит коллекцию созданных сущностей)
  * Class AObject
- * @package tag
+ * @package map\interfaces
  */
 abstract class AObject extends ALevel
 {
@@ -24,12 +24,11 @@ abstract class AObject extends ALevel
   /**
    * AObject constructor.
    * @param integer $id
-   * @param integer $level
    */
-  final protected function __construct($id, $level)
+  final protected function __construct($id)
   {
     $this->id = $id;
-    parent::__construct($level);
+    parent::__construct(0);
   }
 
   /**

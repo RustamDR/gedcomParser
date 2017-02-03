@@ -1,13 +1,13 @@
 <?php
 
-namespace tag;
+namespace map\objects;
 
-use tag\aclasses\AObject;
+use map\interfaces\AObject;
 
 /**
  * Класс, описывающий тэг FAM
  * Class Fam
- * @package tag
+ * @package map\objects
  */
 class Fam extends AObject
 {

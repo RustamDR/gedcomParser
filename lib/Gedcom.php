@@ -2,8 +2,8 @@
 
 namespace lib;
 
-use tag\aclasses\AObject;
-use tag\aclasses\AProperty;
+use map\interfaces\AObject;
+use map\interfaces\AProperty;
 
 /**
  * Конвертер GEDCOM в json, prolog, xml форматы
@@ -106,9 +106,10 @@ class Gedcom
 
   /**
    * @param AObject|AProperty|null $node
+   * @param integer $previosLevel
    * @return $this
    */
-  public function parse($node = null)
+  public function parse($node = null, $previosLevel = 0)
   {
     if (!$this->_data) {
       return $this;
@@ -145,7 +146,7 @@ class Gedcom
         }
 
         // если текущий уровень стал менее или равен уровню текущей сущности, то текущая сущность отпарсилась
-        if ($node && $currentLevel <= $node->level) {
+        if ($node && $currentLevel <= $previosLevel) {
           $this->_strNum--;
 
           return;
@@ -161,24 +162,30 @@ class Gedcom
           // если найден Id, то второй это тег сущности
           $tag = array_shift($matches);
         } elseif ($matches) {
-          // если первый не Id, то это значение атрибута $tag
+          // если первый не Id, то это значение атрибута $map, тоже может быть id
           $value = array_shift($matches);
         }
 
         // приведем тэг к нижнему регистру
         $tag = strtolower($tag);
 
-        // если нашли Id, то это новая сущность (если нет значения то тоже сущность HEAD)
-        $tagClass = $this->getTagClass($tag);
-        $newNode = $this->factory($tagClass, $id, $currentLevel);
+        // если нашли Id, то это новая сущность
+        // TODO если встретили и свойство и объект то создаем объект и присваиваем его свойству как то так ....
+        $newNode = $this->factory($tag, $id, $currentLevel);
         // получили новый объект по тегу
         if ($newNode) {
           // теперь парсим данные для новой сущности тэга, пока не выйдем на его уровень
-          $this->parse($newNode);
+          $this->parse($newNode, $currentLevel);
 
-          if ($newNode instanceof AObject) {
-            continue;
+          // если встретили тэг вида 3 <TAG> @ID2@, то проверяем текущее свойство не ссылается ли на
+          // одноименный объект, если да, то создаем также объект по $tag и присваиваем его в свойство
+          // например, 3 SOUR @S1@ - в родительском теге есть свойство sour и есть объекты sour, создаем в
+          // свойстве объект
+          $id = $this->getId($value);
+          if ($id && property_exists($newNode, $tag)) {
+            $newNode->{$tag} = $this->factory($tag, $id, $currentLevel);
           }
+
           $value = $newNode;
           unset($newNode);
         }
@@ -216,25 +223,41 @@ class Gedcom
 
   /**
    * Проверка на возможность автозагрузки класса для тега
-   * @param string  $className
+   * @param string  $tag
    * @param integer $id
    * @param integer $level
    * @return AObject|AProperty|null
    */
-  protected function factory($className, $id, $level)
+  protected function factory($tag, $id, $level)
   {
+    $className = $id ? $this->getObjectClass($tag) : $this->getPropertyClass($tag);
     try {
       class_exists($className, true);
 
-      return $id ? $className::getObject($id, $level) : $className::getObject($level);
+      return $id ? $className::getObject($id) : $className::getObject($level);
     } catch (\Exception $e) {
       return null;
     }
   }
 
-  protected function getTagClass($tag)
+  /**
+   * Класс объекта
+   * @param $tag
+   * @return string
+   */
+  protected function getObjectClass($tag)
   {
-    return 'tag\\' . ucfirst($tag);
+    return 'map\\objects\\' . ucfirst($tag);
+  }
+
+  /**
+   * Класс свойства объекта
+   * @param $tag
+   * @return string
+   */
+  protected function getPropertyClass($tag)
+  {
+    return 'map\\properties\\' . ucfirst($tag);
   }
 
   /**
@@ -321,9 +344,7 @@ class Gedcom
 
       $referenceTag = $referenceRules[$tag];
       $isCollection = is_array($node->{$tag});
-      /** @var AObject $tagClass */
-      $tagClass = $this->getTagClass($referenceTag);
-      $value = $this->factory($tagClass, $id, $level);
+      $value = $this->factory($referenceTag, $id, $level);
     }
 
     if ($isCollection) {

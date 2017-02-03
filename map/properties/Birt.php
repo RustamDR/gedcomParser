@@ -1,13 +1,13 @@
 <?php
 
-namespace tag;
+namespace map\properties;
 
-use tag\aclasses\AProperty;
+use map\interfaces\AProperty;
 
 /**
  * Класс, описывающий тэг BIRT
  * Class Birt
- * @package tag
+ * @package map\properties
  */
 class Birt extends AProperty
 {
@@ -25,11 +25,18 @@ class Birt extends AProperty
   public $plac;
 
   /**
+   * @var Sour
+   */
+  public $sour;
+
+  /**
    * @inheritdoc
    */
   public function referenceRules()
   {
-    return [];
+    return [
+      'sour' => 'sour',
+    ];
   }
 
 }

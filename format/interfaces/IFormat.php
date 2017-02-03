@@ -1,10 +1,10 @@
 <?php
 
-namespace format\aclasses;
+namespace format\interfaces;
 
 /**
  * Interface IFormat
- * @package format\aclasses
+ * @package format\interfaces
  */
 interface IFormat
 {

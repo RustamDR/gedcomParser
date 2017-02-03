@@ -1,25 +1,24 @@
 <?php
 
-namespace format\aclasses;
-
-use tag\Fam;
-use tag\Indi;
+namespace format\interfaces;
+use map\objects\Fam;
+use map\objects\Indi;
 
 /**
  * Абстрактный класс содержащий данные для сохранения
  * Class AFormat
- * @package format\aclasses
+ * @package format\interfaces
  */
 abstract class AFormat implements IFormat
 {
 
   /**
-   * @var \tag\Indi[]
+   * @var Indi[]
    */
   protected $_indies;
 
   /**
-   * @var \tag\Fam[]
+   * @var Fam[]
    */
   protected $_fams;
 

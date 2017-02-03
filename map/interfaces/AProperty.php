@@ -1,11 +1,11 @@
 <?php
 
-namespace tag\aclasses;
+namespace map\interfaces;
 
 /**
  * Свойства в виде объектов
  * Class AProperty
- * @package tag\aclasses
+ * @package map\interfaces
  */
 abstract class AProperty extends ALevel
 {

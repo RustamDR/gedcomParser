@@ -1,13 +1,14 @@
 <?php
 
-namespace tag;
+namespace map\objects;
 
-use tag\aclasses\AObject;
+use map\interfaces\AObject;
+use map\properties\Birt;
 
 /**
  * Класс описывающий тэг INDI
  * Class Indi
- * @package tag
+ * @package map\objects
  */
 class Indi extends AObject
 {
