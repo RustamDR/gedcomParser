@@ -1,8 +1,8 @@
-# Парсер Gedcom
+### Парсер Gedcom
 
  Вызов из командной строки:
  
- # Name
+ ## Name
     
     php parser.php
 
