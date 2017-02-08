@@ -1,15 +1,15 @@
 # Парсер Gedcom
 
  Вызов из командной строки:
- ### Name
+ ###Name
     
     php parser.php
 
- ### Synopsys
+ ###Synopsys
     
     [OPTION]...[FILE]...
 
- ### Description
+ ###Description
     -f<prolog|json|xml> - формат результирующего файла, по-умолчанию prolog
     -g                  - gedcom файл для парсинга
     -r                  - result файл, по-умолчанию result
