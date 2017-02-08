@@ -1,6 +1,7 @@
 # Парсер Gedcom
 
  Вызов из командной строки:
+ 
  ### Name
     
     php parser.php
@@ -10,11 +11,13 @@
     [OPTION]...[FILE]...
 
  ### Description
+ 
     -f<prolog|json|xml> - формат результирующего файла, по-умолчанию prolog
     -g                  - gedcom файл для парсинга
     -r                  - result файл, по-умолчанию result
 
  ### Examples
+ 
     php parser.php -groyal_family.ged -rfamily
         парсить gedcom-файл royal_family.ged в результирующий пролог-файл family.pl
 
