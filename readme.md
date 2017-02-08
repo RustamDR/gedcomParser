@@ -1,18 +1,20 @@
-#Парсер файлов формата Gedcom
+# Парсер Gedcom
 
  Вызов из командной строки:
- NAME
+ ### Name
+    
     php parser.php
 
- SYNOPSYS
+ ### Synopsys
+    
     [OPTION]...[FILE]...
 
- DESCRIPTION
+ ### Description
     -f<prolog|json|xml> - формат результирующего файла, по-умолчанию prolog
     -g                  - gedcom файл для парсинга
     -r                  - result файл, по-умолчанию result
 
- EXAMPLES
+ ### Examples
     php parser.php -groyal_family.ged -rfamily
         парсить gedcom-файл royal_family.ged в результирующий пролог-файл family.pl
 
