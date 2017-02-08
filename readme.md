@@ -9,9 +9,9 @@ php parser.php
 [OPTION]...[FILE]...
 
 ### Description
-  -f    формат результирующего файла, по-умолчанию prolog (prolog|json|xml)
-  -g    gedcom файл для парсинга
-  -r    result файл, по-умолчанию result
+*  -f    формат результирующего файла, по-умолчанию prolog (prolog|json|xml)
+*  -g    gedcom файл для парсинга
+*  -r    result файл, по-умолчанию result
 
 ### Examples
 php parser.php -groyal_family.ged -rfamily
